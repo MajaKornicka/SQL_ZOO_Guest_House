@@ -173,7 +173,7 @@ WHERE d1_first > d2_first
 ORDER BY 1
 ````
 
-Result
+Results
 
 
 |last_name	|first_name	|first_name_2|
@@ -216,7 +216,7 @@ ORDER BY check_out
 
 ```
 
-Result
+Results
 
 |check_out|	1st	|2nd	|3rd|
 |--------|-----|--------|----------|
@@ -227,3 +227,33 @@ Result
 |2016-11-18	|2	|3	|2|
 |2016-11-19	|5	|5	|1|
 |2016-11-20 |	2	|2	|2|
+
+ <br>
+  <br>
+
+13. Free rooms? List the rooms that are free on the day 25th Nov 2016.
+
+```sql
+WITH basic AS (
+SELECT DATE_FORMAT(booking_Date, "%Y-%m-%d") as check_in, 
+       DATE_FORMAT(DATE_ADD(booking_date, INTERVAL (nights) DAY), "%Y-%m-%d") as check_out,
+       room_no
+FROM booking)
+
+SELECT room_no 
+FROM basic
+
+EXCEPT
+
+SELECT room_no
+FROM basic
+WHERE check_in <= "2016-11-25" AND check_out > "2016-11-25"
+```
+
+Results
+
+|room_no|
+|------------|
+|207|
+|210|
+|304|

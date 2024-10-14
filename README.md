@@ -4,6 +4,10 @@ Data and Questions Source: https://sqlzoo.net/wiki/Guest_House
 
 Solutions written using MySQL
 
+
+
+![image](https://github.com/user-attachments/assets/78ec586e-7a06-42f5-badd-d767f85d8273)
+
  <br>
  <br>
  
@@ -139,4 +143,87 @@ Results
   <br>
 
 
+### Hard Problems
 
+ <br>
+11. Coincidence. Have two guests with the same surname ever stayed in the hotel on the evening? Show the last name and both first names. Do not include duplicates.
+
+
+```sql
+WITH dates AS (
+SELECT DATE_FORMAT(booking_date, "%Y-%m-%d") as check_in, 
+       DATE_FORMAT(DATE_ADD(booking_date, INTERVAL (nights) DAY), "%Y-%m-%d") as check_out,
+       guest_id,
+       last_name,
+       first_name
+FROM booking
+JOIN guest ON guest.id = booking.guest_id),
+
+names AS (
+SELECT d1.last_name as d1_last, d1.first_name AS d1_first, d2.last_name AS d2_last, d2.first_name as d2_first
+FROM dates d1
+JOIN dates d2 ON d2.check_in >= d1.check_in AND d2.check_in < d1.check_out
+WHERE d1.last_name = d2.last_name
+AND d1.guest_id <> d2.guest_id
+)
+
+SELECT distinct d1_last as last_name, d1_first as first_name, d2_first as first_name_2
+FROM names
+WHERE d1_first > d2_first
+ORDER BY 1
+````
+
+Result
+
+
+|last_name	|first_name	|first_name_2|
+|--------|---------|----------|
+|Davies|	Philip	|David T. C.|
+|Evans|	Mr Nigel	|Graham|
+|Howarth	|Sir Gerald	|Mr George|
+|Jones|	Susan Elan	|Mr Marcus|
+|Lewis	|Dr Julian	|Clive|
+|McDonnell|	John	|Dr Alasdair|
+
+
+ <br>
+  <br>
+
+  12. Check out per floor. The first digit of the room number indicates the floor – e.g. room 201 is on the 2nd floor. For each day of the week beginning 2016-11-14 show how many rooms are being vacated that day by floor number. Show all days in the correct order.
+
+```sql
+WITH basic AS (
+SELECT DATE_FORMAT(DATE_ADD(booking_date, INTERVAL (nights) DAY), "%Y-%m-%d") as check_out, 
+       room_no
+FROM booking)
+
+SELECT check_out,
+       SUM(CASE WHEN room_no LIKE '1%' THEN 1
+           ELSE 0
+           END) AS 1st,
+
+       SUM(CASE WHEN room_no LIKE '2%' THEN 1
+           ELSE 0
+           END) AS 2nd,
+
+       SUM(CASE WHEN room_no LIKE '3%' THEN 1
+           ELSE 0
+           END) AS 3rd
+FROM basic
+WHERE check_out >= "2016-11-14" AND check_out <= DATE_ADD("2016-11-14" , INTERVAL 6 DAY)
+GROUP BY check_out
+ORDER BY check_out
+
+```
+
+Result
+
+|check_out|	1st	|2nd	|3rd|
+|--------|-----|--------|----------|
+|2016-11-14	|5|	3	|4|
+|2016-11-15	|6	|4	|1|
+|2016-11-16	|2	|2	|4|
+|2016-11-17	|5	|3	|6|
+|2016-11-18	|2	|3	|2|
+|2016-11-19	|5	|5	|1|
+|2016-11-20 |	2	|2	|2|

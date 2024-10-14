@@ -257,3 +257,45 @@ Results
 |207|
 |210|
 |304|
+
+ <br>
+  <br>
+14. Single room for three nights required. A customer wants a single room for three consecutive nights. Find the first available date in December 2016.
+
+
+```sql
+WITH basic AS (
+SELECT id, 
+       DATE_FORMAT(booking_Date, "%Y-%m-%d") as check_in, 
+       DATE_FORMAT(DATE_ADD(booking_date, INTERVAL (nights) DAY), "%Y-%m-%d") as check_out
+FROM room
+JOIN booking ON room.id = booking.room_no
+WHERE DATE_FORMAT(DATE_ADD(booking_date, INTERVAL (nights) DAY), "%Y-%m-%d") >= "2016-12-01"
+OR booking_date >="2016-12-01"),
+
+possible_stay AS (
+
+SELECT*, LEAD (check_in,1) OVER (PARTITION BY id ORDER BY id) as next_booking,
+       CASE WHEN DATEDIFF
+               (LEAD (check_in,1) OVER (PARTITION BY id ORDER BY id), check_out) >=3
+       OR (LEAD (check_in,1) OVER (PARTITION BY id ORDER BY id)) IS NULL THEN "yes"
+       ELSE "No" END as possible_stay
+FROM basic
+WHERE ID IN (101,201,301)
+)
+
+SELECT id, MIN(check_out) as first_possible_check_in
+FROM possible_stay
+WHERE possible_stay = "yes"
+GROUP BY id
+ORDER BY 2
+LIMIT 1
+
+```
+
+Results
+
+|id|first_possible_check_in|
+|------------|---|
+|201|2016-12-11|
+
